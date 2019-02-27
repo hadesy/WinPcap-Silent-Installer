@@ -37,6 +37,9 @@
 ;This includes the modern user interface
 !include "MUI.nsh"
 
+;This includes getWindowsVersion function
+!include "WinVer.nsh"
+
 ;--------------------------------
 ;Project definitions
 
@@ -191,7 +194,7 @@ FunctionEnd
     Call GetWindowsVersion
     Call GetKernelDllVersion
     Call IsNetMonAvailable
-
+	
 	StrCmp $WINPCAP_TARGET_OS "Vista" Check_IA64
 	StrCmp $WINPCAP_TARGET_OS "7" Check_IA64
 	StrCmp $WINPCAP_TARGET_OS "8" Check_IA64
@@ -1174,275 +1177,145 @@ End:
 
 FunctionEnd
 
-
-
-;--------------------------------
-;--------------------------------
-;--------------------------------
-;--------------------------------
-; EXTERNAL FUNCTIONS TAKEN ON THE WEB
-;--------------------------------
-;--------------------------------
-;--------------------------------
-;--------------------------------
-; GetWindowsVersion Function, coming from nsis manual but slightly
-; modified by LD to return NT without number
-;
-; Based on Yazno's function, http://yazno.tripod.com/powerpimpit/
-; Updated by Joost Verburg
-;
-; Returns on top of stack
-;
-; Windows Version (95, 98, ME, NT, 2000, XP, 2003)
-; or
-; '' (Unknown Windows Version)
-;
-; Usage:
-;   Call GetWindowsVersion
-;   Pop $R0
-;   ; at this point $R0 is "NT 4.0" or whatnot
+Function GetWindowsVersion
  
- Function GetWindowsVersion
- 
-   Push $R0
-   Push $R1
- 
-   ClearErrors
- 
-   ReadRegStr $R0 HKLM \
-   "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
-
-   IfErrors 0 lbl_winnt
-   
-   ; we are not NT
-   ReadRegStr $R0 HKLM \
-   "SOFTWARE\Microsoft\Windows\CurrentVersion" VersionNumber
- 
-   StrCpy $R1 $R0 1
-   StrCmp $R1 '4' 0 lbl_error
- 
-   StrCpy $R1 $R0 3
- 
-   StrCmp $R1 '4.0' lbl_win32_95
-   StrCmp $R1 '4.9' lbl_win32_ME lbl_win32_98
- 
-   lbl_win32_95:
+   ${If} ${IsWin95}
      StrCpy $WINPCAP_TARGET_OS '95'
-   Goto lbl_done
- 
-   lbl_win32_98:
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin98}
      StrCpy $WINPCAP_TARGET_OS '98'
-   Goto lbl_done
- 
-   lbl_win32_ME:
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWinME}
      StrCpy $WINPCAP_TARGET_OS 'ME'
-   Goto lbl_done
- 
-   lbl_winnt:
-
-   StrCpy $R1 $R0 1
- 
-   StrCmp $R1 '3' lbl_winnt_x
-   StrCmp $R1 '4' lbl_winnt_x
- 
-   StrCpy $R1 $R0 3
- 
-   StrCmp $R1 '5.0' lbl_winnt_2000
-   ; note: this is not true on x64 machines, the version is 5.2
-   StrCmp $R1 '5.1' lbl_winnt_XP
-   StrCmp $R1 '5.2' lbl_winnt_XP64_2003
-   StrCmp $R1 '6.0' lbl_vista
-   StrCmp $R1 '6.1' lbl_Win7
-   StrCmp $R1 '6.2' lbl_Win8 lbl_error
-  
-   lbl_winnt_x:
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWinNT4}
      StrCpy $WINPCAP_TARGET_OS 'NT'
-
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-
-   Goto lbl_done
- 
-   lbl_winnt_2000:
-     Strcpy $WINPCAP_TARGET_OS '2000'
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin2000}
+     StrCpy $WINPCAP_TARGET_OS '2000'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-
-   Goto lbl_done
- 
-   lbl_winnt_XP:
-     Strcpy $WINPCAP_TARGET_OS 'XP'
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWinXP}
+     StrCpy $WINPCAP_TARGET_OS 'XP'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 
-	 IfErrors lbl_error
-
-   Goto lbl_done
- 
-   lbl_winnt_XP64_2003:
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin2003}
+     StrCpy $WINPCAP_TARGET_OS '2003'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 IfErrors lbl_error
-
-	StrCmp $WINPCAP_TARGET_ARCHITECTURE 'x86' lbl_winnt_2003 lbl_winnt_XP
-
-lbl_winnt_2003:
-
-     Strcpy $WINPCAP_TARGET_OS '2003'
-
-   Goto lbl_done
- 
-   lbl_vista:
-     Strcpy $WINPCAP_TARGET_OS 'vista'
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWinVista}
+     StrCpy $WINPCAP_TARGET_OS 'Vista'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 IfErrors lbl_error
-
-   Goto lbl_done
- 
-   lbl_Win7:
-     Strcpy $WINPCAP_TARGET_OS '7'
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin7}
+     StrCpy $WINPCAP_TARGET_OS '7'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 IfErrors lbl_error
-
-   Goto lbl_done
-
-   lbl_Win8:
-     Strcpy $WINPCAP_TARGET_OS '8'
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin8}
+     StrCpy $WINPCAP_TARGET_OS '8'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 IfErrors lbl_error
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin10}
+     StrCpy $WINPCAP_TARGET_OS '8'
+	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
+     Return
+   ${EndIf}
+   
+   Strcpy $WINPCAP_TARGET_OS ''
 
-   Goto lbl_done
-
-   lbl_error:
-     Strcpy $WINPCAP_TARGET_OS ''
-   lbl_done:
- 
-   Pop $R1
-   Pop $R0
- 
  FunctionEnd
 
 ;--------------------------------
 ;Exactly the same of previous function, but the name starts with "un."
 ;The reason is that the NSIS uninstaller accepts only function that start with "un."
  
- Function un.GetWindowsVersion
+Function un.GetWindowsVersion
  
-   Push $R0
-   Push $R1
- 
-   ClearErrors
- 
-   ReadRegStr $R0 HKLM \
-   "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
-
-   IfErrors 0 lbl_winnt
-   
-   ; we are not NT
-   ReadRegStr $R0 HKLM \
-   "SOFTWARE\Microsoft\Windows\CurrentVersion" VersionNumber
- 
-   StrCpy $R1 $R0 1
-   StrCmp $R1 '4' 0 lbl_error
- 
-   StrCpy $R1 $R0 3
- 
-   StrCmp $R1 '4.0' lbl_win32_95
-   StrCmp $R1 '4.9' lbl_win32_ME lbl_win32_98
- 
-   lbl_win32_95:
+   ${If} ${IsWin95}
      StrCpy $WINPCAP_TARGET_OS '95'
-   Goto lbl_done
- 
-   lbl_win32_98:
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin98}
      StrCpy $WINPCAP_TARGET_OS '98'
-   Goto lbl_done
- 
-   lbl_win32_ME:
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWinME}
      StrCpy $WINPCAP_TARGET_OS 'ME'
-   Goto lbl_done
- 
-   lbl_winnt:
-
-   StrCpy $R1 $R0 1
- 
-   StrCmp $R1 '3' lbl_winnt_x
-   StrCmp $R1 '4' lbl_winnt_x
- 
-   StrCpy $R1 $R0 3
- 
-   StrCmp $R1 '5.0' lbl_winnt_2000
-   ; note: this is not true on x64 machines, the version is 5.2
-   StrCmp $R1 '5.1' lbl_winnt_XP
-   StrCmp $R1 '5.2' lbl_winnt_XP64_2003
-   StrCmp $R1 '6.0' lbl_vista
-   StrCmp $R1 '6.1' lbl_Win7 lbl_error
-   StrCmp $R1 '6.2' lbl_Win8 lbl_error
- 
- 
- 
-   lbl_winnt_x:
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWinNT4}
      StrCpy $WINPCAP_TARGET_OS 'NT'
-   Goto lbl_done
- 
-   lbl_winnt_2000:
-     Strcpy $R0 '2000'
-   Goto lbl_done
- 
-   lbl_winnt_XP:
-     Strcpy $WINPCAP_TARGET_OS 'XP'
-
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 
-	 IfErrors lbl_error
-
-   Goto lbl_done
- 
-   lbl_winnt_XP64_2003:
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin2000}
+     StrCpy $WINPCAP_TARGET_OS '2000'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 IfErrors lbl_error
-
-	StrCmp $WINPCAP_TARGET_ARCHITECTURE 'x86' lbl_winnt_2003 lbl_winnt_XP
-
-lbl_winnt_2003:
-
-     Strcpy $WINPCAP_TARGET_OS '2003'
-
-   Goto lbl_done
- 
-   lbl_vista:
-     Strcpy $WINPCAP_TARGET_OS 'vista'
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWinXP}
+     StrCpy $WINPCAP_TARGET_OS 'XP'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 IfErrors lbl_error
-
-   Goto lbl_done
-
-   lbl_Win7:
-     Strcpy $WINPCAP_TARGET_OS '7'
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin2003}
+     StrCpy $WINPCAP_TARGET_OS '2003'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 IfErrors lbl_error
-
-   Goto lbl_done
-
-   lbl_Win8:
-     Strcpy $WINPCAP_TARGET_OS '8'
-
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWinVista}
+     StrCpy $WINPCAP_TARGET_OS 'Vista'
 	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-	 IfErrors lbl_error
-
-   Goto lbl_done
-
-   lbl_error:
-     Strcpy $WINPCAP_TARGET_OS ''
-   lbl_done:
- 
-   Pop $R1
-   Pop $R0
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin7}
+     StrCpy $WINPCAP_TARGET_OS '7'
+	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin8}
+     StrCpy $WINPCAP_TARGET_OS '8'
+	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
+     Return
+   ${EndIf}
+   
+   ${If} ${IsWin10}
+     StrCpy $WINPCAP_TARGET_OS '8'
+	 ReadRegStr $WINPCAP_TARGET_ARCHITECTURE HKEY_LOCAL_MACHINE "System\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
+     Return
+   ${EndIf}
+   
+   Strcpy $WINPCAP_TARGET_OS ''
  
  FunctionEnd
 
